@@ -1,32 +1,40 @@
 # Portfolio Studio
 
-Portfolio Next.js 16 (App Router), React 19, TypeScript. Giao diện tiếng Việt, responsive, hiệu ứng cuộn và reduced-motion. Nội dung ban đầu là hồ sơ mẫu; thay bằng thông tin thật trước khi chia sẻ.
+Next.js 16 (App Router), React 19, TypeScript. Portfolio tiếng Việt, responsive, logo SVG, toolkit tự cuộn và section fade-in. Nội dung ban đầu là hồ sơ mẫu.
 
-## Chạy dự án
-- Node.js >= 20.19.
-- npm install
-- npm run dev
-- npm run build (xuất website tĩnh ra out/)
-- node tests/sharing.cjs
+## Chạy local
 
-## Sử dụng
-1. Chọn Chỉnh sửa để cập nhật thông tin, dự án, kinh nghiệm, kỹ năng, email và link CV.
-2. Lưu thay đổi: bản nháp nằm trong localStorage của trình duyệt trên thiết bị hiện tại.
-3. Tab Liên kết cho phép xuất/nhập bản sao JSON khi đổi thiết bị.
-4. Xem trước để xem giao diện không có thanh quản lý.
-5. Gửi HR tạo một link chứa bản hồ sơ đã nén trong URL fragment. Link giữ nguyên nội dung tại thời điểm tạo; HR không thấy công cụ chỉnh sửa.
-6. Sau khi thay đổi nội dung, tạo và gửi link mới.
+1. npm install
+2. npm run dev
+3. Chỉnh sửa → Lưu thay đổi → Gửi HR. Website lưu bản sao trên server và trả link /?s=<mã 22 ký tự>.
 
-## Quyền truy cập và giới hạn
-- Bản nháp không đồng bộ giữa các thiết bị hay tên miền; không có cơ sở dữ liệu hoặc tài khoản quản trị.
-- Mỗi người chỉ chỉnh sửa bản nháp trong trình duyệt của mình. Chế độ HR là giao diện chỉ xem, không phải chữ ký xác thực danh tính.
-- Ai nhận được link đầy đủ đều có thể đọc nội dung khi được phép truy cập website. Link chứa toàn bộ hồ sơ, không phải một mã truy cập bí mật.
-- Sites được triển khai riêng tư cho chủ sở hữu. Phải cấp quyền truy cập hoặc bật công khai trước khi gửi cho HR bên ngoài.
-- Hãy gửi nguyên link; giới hạn độ dài của nền tảng nhắn tin có thể ảnh hưởng link chứa hồ sơ dài.
-- CV sử dụng URL do người sở hữu cung cấp. Đảm bảo người nhận có quyền xem tệp.
-- Các trường bị giới hạn kích thước, tối đa 12 dự án và 12 kinh nghiệm.
-- Nội dung trong link cũ không thể thu hồi riêng; không đưa dữ liệu nhạy cảm vào hồ sơ.
+Bản nháp vẫn ở localStorage. Bản chia sẻ nằm trong .data/shares/, không được commit lên Git. Link dùng được giữa các trình duyệt kết nối cùng server; link localhost không mở được từ máy HR bên ngoài.
+
+Cùng nội dung tạo cùng link. Sửa nội dung tạo link mới; bản chia sẻ cũ giữ nguyên. Các link #p=... cũ vẫn hoạt động. Có thể nhập/xuất bản nháp JSON trong tab Liên kết.
+
+## Chạy production
+
+- Link ngắn cần API server: npm run build, sau đó npm start.
+- Đặt SHARE_STORAGE_DIR thành đường dẫn tuyệt đối trên **ổ đĩa bền vững**, giữ lại qua restart/redeploy; các instance phải dùng chung thư mục này.
+- Không dùng ổ tạm của serverless hoặc thư mục build để lưu hồ sơ. API production trả 503 khi chưa cấu hình nơi lưu, thay vì tạo link sẽ mất dữ liệu.
+- Sao lưu và bảo vệ thư mục lưu trữ. Khôi phục đúng thư mục để giữ link cũ.
+- Host phải phục vụ cả trang web và /api/shares cùng origin.
+- Cấu hình mẫu: .env.example. Không commit .env.local hoặc dữ liệu hồ sơ.
+- Đây là Next.js Node server, không còn là static export. Bản Sites đã xuất bản trước đây vẫn là bản tĩnh cũ; không đóng gói thư mục out/ cũ để phát hành thay đổi này. Muốn chạy trên Cloudflare/Sites/serverless cần chuyển kho bản chia sẻ sang lưu trữ bền vững của nền tảng và adapter phù hợp.
+- Người nhận phải có quyền truy cập website nếu hosting đang riêng tư.
+
+## API
+
+- POST /api/shares: nhận hồ sơ hợp lệ, lưu snapshot bất biến, trả {id,path}.
+- GET /api/shares/:id: trả {profile}; 400 cho mã sai, 404 khi không tồn tại, 503 khi kho lưu trữ lỗi.
+- Không có API liệt kê, chỉnh sửa hay xóa snapshot. ID là 22 ký tự từ SHA-256 của nội dung; không coi ID là cơ chế xác thực.
+- Người có link và quyền truy cập website có thể xem toàn bộ snapshot. Không có tài khoản quản trị riêng; API tạo snapshot phục vụ người có quyền truy cập website.
+- Giới hạn request 160 KB, hồ sơ 40.000 ký tự, 12 dự án và 12 kinh nghiệm.
 
 ## Kiểm tra
-Production build và TypeScript thành công. Kiểm tra tự động cho Unicode, vòng nén/giải nén, URL không an toàn, email sai, payload lỗi, giới hạn danh sách và tính độc lập của bản chia sẻ. HTTP preview trả 200.
-Không thực hiện kiểm thử tương tác trình duyệt. WebMCP start_portfolio_editing được bật khi trình duyệt hỗ trợ; chưa có môi trường WebMCP để kiểm chứng hợp đồng runtime.
+
+- node tests/sharing.cjs: tương thích link dài, Unicode và validation.
+- node tests/share-store.cjs: lưu bền qua process mới, snapshot bất biến, ghi đồng thời, cấu hình production.
+- node tests/share-api.cjs http://127.0.0.1:3000: kiểm tra API trên server đang chạy bằng hồ sơ mẫu tổng hợp (tạo hai bản ghi thử trong kho).
+- npm run build: compile và TypeScript.
+- Chưa kiểm thử tương tác trình duyệt. WebMCP start_portfolio_editing chỉ bật trên trình duyệt hỗ trợ.

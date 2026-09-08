@@ -36,3 +36,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Private shared profiles (never commit snapshots)
+/.data/
+# Allow the configuration template, never actual secrets.
+!.env.example

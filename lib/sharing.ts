@@ -22,3 +22,23 @@ export function validateProfile(input: unknown): Profile {
 export function encodeProfile(profile:Profile){ return LZString.compressToEncodedURIComponent(JSON.stringify(validateProfile(profile))); }
 export function decodeProfile(encoded:string){ if(encoded.length>55000) throw new Error("Link hồ sơ quá dài."); const json=LZString.decompressFromEncodedURIComponent(encoded);if(!json || json.length>40000)throw new Error("Link hồ sơ bị thiếu hoặc hỏng.");return validateProfile(JSON.parse(json)); }
 export function profileLink(profile:Profile){return window.location.origin+window.location.pathname+"#p="+encodeProfile(profile);}
+
+export async function createShortProfileLink(profile: Profile, signal?: AbortSignal): Promise<string> {
+ const response = await fetch("/api/shares", {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(validateProfile(profile)), signal,
+ });
+ let result;
+ try { result = await response.json(); } catch { throw new Error("Dịch vụ link ngắn chưa hoạt động trên website này."); }
+ if (!response.ok) throw new Error(result.error || "Không thể tạo link ngắn.");
+ if (typeof result.id !== "string" || !/^[A-Za-z0-9_-]{22}$/.test(result.id)) throw new Error("Link trả về không hợp lệ.");
+ return window.location.origin + "/?s=" + result.id;
+}
+export async function fetchSharedProfile(id: string, signal?: AbortSignal): Promise<Profile> {
+ if (!/^[A-Za-z0-9_-]{22}$/.test(id)) throw new Error("Link hồ sơ không hợp lệ.");
+ const response = await fetch("/api/shares/" + id, { signal, cache: "no-store" });
+ let result;
+ try { result = await response.json(); } catch { throw new Error("Dịch vụ chia sẻ chưa hoạt động trên website này."); }
+ if (!response.ok) throw new Error(result.error || "Không thể tải hồ sơ.");
+ return validateProfile(result.profile);
+}

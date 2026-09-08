@@ -1,11 +1,11 @@
 "use client";
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Save, Copy, Download, Upload, Check, ArrowUpRight } from "lucide-react";
 import { type Profile } from "@/lib/profile";
-import { DRAFT_KEY, validateProfile, profileLink } from "@/lib/sharing";
+import { DRAFT_KEY, validateProfile, createShortProfileLink } from "@/lib/sharing";
 type Props={open:boolean;onOpenChange:(open:boolean)=>void;profile:Profile;onSave:(p:Profile)=>void};
 function Field({label,value,onChange,multiline=false,type="text",required=false}:{label:string;value:string;onChange:(s:string)=>void;multiline?:boolean;type?:string;required?:boolean}){return <label className="editor-field"><span>{label}{required?" *":""}</span>{multiline?<textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} maxLength={5000} required={required}/>:<input type={type} value={value} onChange={e=>onChange(e.target.value)} maxLength={5000} required={required}/>}</label>}
 export function Editor({open,onOpenChange,profile,onSave}:Props){
@@ -23,7 +23,35 @@ export function Editor({open,onOpenChange,profile,onSave}:Props){
  </div></Tabs>{error&&<p role="alert" className="form-error">{error}</p>}<div className="editor-footer"><span>Bản nháp lưu riêng trên trình duyệt này.</span><button type="submit" className="btn primary"><Save size={16}/>Lưu thay đổi</button></div></form></DialogContent></Dialog>;
 }
 export function ShareDialog({open,onOpenChange,profile}:Omit<Props,"onSave">){
- const [copied,setCopied]=useState(false);const [error,setError]=useState("");const link=typeof window!=="undefined"?profileLink(profile):"";
- return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="share-dialog"><DialogTitle className="editor-title">Sẵn sàng cho cơ hội tiếp theo.</DialogTitle><DialogDescription>Link chứa một bản hồ sơ chỉ xem. Sau khi chỉnh sửa thêm, hãy tạo và gửi link mới. Người có link có thể đọc toàn bộ nội dung hồ sơ.</DialogDescription><label className="editor-field"><span>Link hồ sơ gửi HR</span><textarea rows={3} readOnly value={link} onFocus={e=>e.target.select()}/></label><div className="share-actions"><button className="btn primary" onClick={async()=>{try{await navigator.clipboard.writeText(link);setCopied(true)}catch{setError("Hãy chọn và sao chép toàn bộ link trong ô phía trên.")}}}>{copied?<Check size={16}/>:<Copy size={16}/>} {copied?"Đã sao chép":"Sao chép link"}</button><a className="btn subtle" target="_blank" rel="noreferrer" href={link}>Mở bản HR <ArrowUpRight size={16}/></a></div>{error&&<p role="alert" className="form-error">{error}</p>}<p className="field-help">Link giữ nguyên nội dung tại thời điểm tạo. Nếu website yêu cầu đăng nhập, cần cấp quyền truy cập website cho HR trước.</p></DialogContent></Dialog>;
+ const [copied,setCopied]=useState(false);
+ const [error,setError]=useState("");
+ const [link,setLink]=useState("");
+ const [loading,setLoading]=useState(true);
+ const [attempt,setAttempt]=useState(0);
+ useEffect(()=>{
+  if(!open)return;
+  const controller=new AbortController();
+  setLoading(true);setLink("");setError("");setCopied(false);
+  createShortProfileLink(profile,controller.signal)
+   .then(url=>{if(!controller.signal.aborted)setLink(url)})
+   .catch(err=>{if(!controller.signal.aborted)setError(err instanceof Error?err.message:"Không thể tạo link ngắn.")})
+   .finally(()=>{if(!controller.signal.aborted)setLoading(false)});
+  return()=>controller.abort();
+ },[open,profile,attempt]);
+ return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="share-dialog">
+  <DialogTitle className="editor-title">Sẵn sàng cho cơ hội tiếp theo.</DialogTitle>
+  <DialogDescription>Link ngắn dẫn đến bản hồ sơ chỉ xem đã lưu trên server của website. Sau khi chỉnh sửa thêm, hãy tạo và gửi link mới.</DialogDescription>
+  <label className="editor-field"><span>Link rút gọn gửi HR</span><input type="text" readOnly value={link} placeholder={loading?"Đang tạo link ngắn…":"Chưa tạo được link"} onFocus={e=>e.target.select()}/></label>
+  {loading&&<p role="status" className="field-help">Đang lưu bản hồ sơ để tạo link…</p>}
+  <div className="share-actions">
+   <button className="btn primary" disabled={!link||loading} onClick={async()=>{
+    try{await navigator.clipboard.writeText(link);setCopied(true);setError("")}
+    catch{setError("Hãy chọn và sao chép link trong ô phía trên.")}
+   }}>{copied?<Check size={16}/>:<Copy size={16}/>} {copied?"Đã sao chép":"Sao chép link"}</button>
+   {link&&<a className="btn subtle" target="_blank" rel="noreferrer" href={link}>Mở bản HR <ArrowUpRight size={16}/></a>}
+   {!loading&&!link&&<button className="btn subtle" onClick={()=>setAttempt(value=>value+1)}>Thử lại</button>}
+  </div>
+  {error&&<p role="alert" className="form-error">{error}</p>}
+  <p className="field-help">Người có link có thể đọc hồ sơ. Link localhost chỉ mở trên máy đang chạy dự án; để gửi HR, hãy tạo link trên website đã triển khai.</p>
+ </DialogContent></Dialog>;
 }
-

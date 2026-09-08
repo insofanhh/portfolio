@@ -1,1 +1,4 @@
-import type { NextConfig } from "next"; const config: NextConfig = { output: "export", images: { unoptimized: true } }; export default config;
+import type { NextConfig } from "next";
+// Short links require live API routes; run next start instead of static export.
+const config: NextConfig = { images: { unoptimized: true } };
+export default config;

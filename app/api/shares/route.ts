@@ -1,5 +1,6 @@
 import { saveShare, ShareStorageUnavailable } from "@/lib/share-store";
 import { validateProfile } from "@/lib/sharing";
+import { PROFILE_BODY_MAX_BYTES } from "@/lib/profile";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > 160000) {
+      if (length > PROFILE_BODY_MAX_BYTES) {
         await reader.cancel();
         return Response.json({ error: "Hồ sơ quá lớn." }, { status: 413, headers });
       }

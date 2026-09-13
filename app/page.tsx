@@ -4,8 +4,9 @@ import { ArrowUpRight, ArrowDown, Code2, GitBranch, Briefcase, MapPin, Mail, Dow
 import { initial, safeUrl, type Profile } from "@/lib/profile";
 import { Editor, ShareDialog } from "@/components/portfolio-editor";
 import { ToolIcon } from "@/components/tool-icon";
+import { PortfolioHeader } from "@/components/portfolio-header";
 import { Toolkit } from "@/components/toolkit";
-import { DRAFT_KEY, validateProfile, decodeProfile, fetchSharedProfile } from "@/lib/sharing";
+import { DRAFT_KEY, validateProfile, decodeProfile, fetchSharedProfile, profilePageHref } from "@/lib/sharing";
 
 export default function Home() {
  const [profile,setProfile]=useState<Profile>(initial);
@@ -16,8 +17,10 @@ export default function Home() {
  const [shareOpen,setShareOpen]=useState(false);
  const [invalid,setInvalid]=useState(false);
  const [shareError,setShareError]=useState("");
+ const [biographyHref,setBiographyHref]=useState("/so-yeu-ly-lich");
  const [notice,setNotice]=useState("");
  useEffect(()=>{
+  setBiographyHref(profilePageHref("/so-yeu-ly-lich",window.location.search,window.location.hash));
   const controller=new AbortController();
   const shortId=new URLSearchParams(window.location.search).get("s");
   const isShared=shortId!==null||window.location.hash.startsWith("#p=");
@@ -40,6 +43,13 @@ export default function Home() {
   const navigate=(event:MouseEvent)=>{const a=(event.target as Element).closest('a[href^="#"]');if(!a)return;const href=a.getAttribute("href");if(!href||href.startsWith("#p="))return;event.preventDefault();if(href==="#")window.scrollTo({top:0,behavior:"smooth"});else document.getElementById(href.slice(1))?.scrollIntoView({behavior:"smooth"});};
   document.addEventListener("click",navigate);return()=>{controller.abort();document.removeEventListener("click",navigate)};
  },[]);
+ useEffect(()=>{
+  if(!ready||invalid)return;
+  const section=new URLSearchParams(window.location.search).get("section")||window.location.hash.slice(1);
+  if(!["about","projects","experience","contact"].includes(section))return;
+  const frame=requestAnimationFrame(()=>document.getElementById(section)?.scrollIntoView({behavior:"instant"}));
+  return()=>cancelAnimationFrame(frame);
+ },[ready,invalid]);
  useEffect(()=>{if(ready)document.title=profile.name+" — "+profile.role;},[profile,ready]);
  useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(""),6000);return()=>clearTimeout(timer)},[notice]);
  useEffect(()=>{
@@ -99,7 +109,7 @@ export default function Home() {
  }, [ready, invalid, profile]);
  if(invalid)return <main className="invalid-share"><Code2 size={40}/><h1>Không thể mở hồ sơ này.</h1><p>{shareError||"Link có thể bị thiếu hoặc không hợp lệ. Hãy kiểm tra lại với người gửi."}</p><button className="btn subtle" onClick={()=>window.location.reload()}>Tải lại hồ sơ</button></main>;
  return <>{!ready&&<div className="loading-profile" role="status">Đang mở hồ sơ…</div>}<a href="#main" className="skip">Đến nội dung</a><div className="scroll-progress"/>
- <header className="header"><a href="#" className="logo"><Code2 size={25}/><span>{profile.name.split(" ").at(-1)?.toLowerCase()}<i>.dev</i></span></a><nav aria-label="Điều hướng"><a href="#about">Giới thiệu</a><a href="#projects">Dự án</a><a href="#experience">Kinh nghiệm</a></nav><a className="nav-contact" href="#contact">Kết nối <ArrowUpRight size={17}/></a></header>
+ <PortfolioHeader name={profile.name}/>
  <main id="main">
  <section className="hero shell"><div className="hero-content"><div className="eyebrow"><span className="live-dot"/>{profile.available?"SẴN SÀNG CHO CƠ HỘI MỚI":"LUÔN SẴN SÀNG KẾT NỐI"}</div><p className="hello">Xin chào, tôi là {profile.name} <span className="wave">✳</span></p><h1>Code with logic.<br/><span>Create with passion.</span></h1><div className="role"><span/> {profile.role}</div><p className="hero-intro">{profile.intro}</p><div className="hero-actions"><a href="#projects" className="btn primary">Khám phá dự án <ArrowUpRight size={19}/></a><a href={safeUrl(profile.cv)||"#experience"} className="btn subtle" target={safeUrl(profile.cv)?"_blank":undefined} rel="noreferrer">{safeUrl(profile.cv)?<Download size={17}/>:<ArrowDown size={17}/>} {safeUrl(profile.cv)?"Xem CV":"Xem kinh nghiệm"}</a></div><div className="hero-location"><MapPin size={14}/>{profile.location}<span className="tiny-line"/>Làm việc từ xa & tại văn phòng</div></div>
  <div className="hero-visual" aria-label="Đoạn mã giới thiệu lập trình viên"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><span className="floating-label label-react"><ToolIcon name="React" size={19}/> React</span><span className="floating-label label-ts"><ToolIcon name="TypeScript" size={18}/> <span>TypeScript</span></span><div className="code-window"><div className="code-toolbar"><div className="window-dots"><b/><b/><b/></div><span>developer.ts</span><Code2 size={15}/></div><div className="code-body"><div><em>01</em><span className="violet">const</span> developer = {"{"}</div><div><em>02</em>  name: <span className="mint">&quot;{profile.name}&quot;</span>,</div><div><em>03</em>  role: <span className="mint">&quot;{profile.role}&quot;</span>,</div><div><em>04</em>  mindset: [</div><div><em>05</em>    <span className="orange">&quot;Stay curious&quot;</span>,</div><div><em>06</em>    <span className="orange">&quot;Build with purpose&quot;</span>,</div><div><em>07</em>    <span className="orange">&quot;Never stop learning&quot;</span></div><div><em>08</em>  ],</div><div><em>09</em>  nextChapter: <span className="violet">await</span> <span className="blue">connect</span>()</div><div><em>10</em>{"}"};</div><div className="code-comment"><em>11</em>// Let's build something meaningful.</div></div><div className="code-footer"><span><span className="live-dot"/> All systems operational</span><span>UTF-8</span></div></div><div className="commit-card"><span className="commit-icon"><Terminal size={20}/></span><div>Ideas → real products<small>Mỗi dòng code, một giá trị.</small></div><Sparkles size={18}/></div></div>
@@ -110,7 +120,7 @@ export default function Home() {
  <section id="experience" className="section shell reveal"><div className="section-heading"><div><p className="eyebrow">03 / HÀNH TRÌNH</p><h2>Không ngừng <span>phát triển.</span></h2></div></div><div className="experience-layout"><div className="experience-intro"><p>Mỗi trải nghiệm là một cơ hội để xây dựng tốt hơn.</p><a href="#contact">Cùng viết chương tiếp theo <ArrowUpRight size={17}/></a></div><div className="timeline">{profile.experience.map((e,i)=><article key={i}><span className="timeline-dot"/><div className="timeline-meta">{e.company}<span>{e.period}</span></div><h3>{e.role}</h3><p>{e.description}</p></article>)}</div></div></section>
  <section className="section shell reveal"><div className="section-heading"><div><p className="eyebrow">04 / CÔNG CỤ & KỸ NĂNG</p><h2>Đúng công cụ.<br/><span>Đúng giải pháp.</span></h2></div><p className="skill-description">Công nghệ thay đổi mỗi ngày.<br/>Tư duy giải quyết vấn đề luôn ở lại.</p></div><div className="skills">{profile.skills.split(",").filter(s=>s.trim()).map((s,i)=><div key={i}><ToolIcon name={s} size={24}/><span>{s.trim()}</span><small>{String(i+1).padStart(2,"0")}</small></div>)}</div></section>
  <section id="contact" className="contact shell reveal"><p className="eyebrow"><span className="live-dot"/> LET'S BUILD SOMETHING GREAT</p><h2>Chương tiếp theo,<br/><span>cùng bạn.</span><ArrowUpRight className="contact-arrow"/></h2><div className="contact-bottom"><p>Bạn đang tìm một người đồng đội?<br/>Tôi luôn sẵn sàng lắng nghe.</p><a className="btn primary" href={"mailto:"+profile.email}>Bắt đầu cuộc trò chuyện <ArrowUpRight size={19}/></a></div><a className="email-link" href={"mailto:"+profile.email}>{profile.email} <ArrowUpRight size={18}/></a></section>
- </main><footer className="shell footer"><span>© {new Date().getFullYear()} {profile.name}</span><span>Built with care. Powered by curiosity.</span><a href="#">Về đầu trang ↑</a></footer>
+ </main><footer className="shell footer"><span>© {new Date().getFullYear()} {profile.name}</span><span>Built with care. Powered by curiosity.</span><a href={biographyHref}>Sơ yếu lý lịch ↗</a><a href="#">Về đầu trang ↑</a></footer>
  {ready&&!preview&&!shared&&<div className="owner-bar"><span className="owner-label"><span className="live-dot"/>PORTFOLIO STUDIO <small>Bản nháp trên thiết bị này</small></span><div><button onClick={()=>setPreview(true)}><Eye size={16}/><span>Xem trước</span></button><button onClick={()=>setEditing(true)} className="edit-button"><Pencil size={15}/>Chỉnh sửa</button><button className="share-button" onClick={()=>setShareOpen(true)}><Share2 size={15}/><span>Gửi HR</span></button></div></div>}
  {preview&&!shared&&<button className="back-edit" onClick={()=>setPreview(false)}><Pencil size={15}/>Về trình chỉnh sửa</button>}
  {editing&&!shared&&<Editor open={editing} onOpenChange={setEditing} profile={profile} onSave={p=>{setProfile(p);setNotice("Đã lưu thay đổi trên thiết bị này.");}}/>}

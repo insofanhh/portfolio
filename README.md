@@ -54,3 +54,11 @@ Kiểm tra adapter: node tests/share-blob.cjs (mock SDK; không upload dữ li�
 - node tests/share-api.cjs http://127.0.0.1:3000: kiểm tra API trên server đang chạy bằng hồ sơ mẫu tổng hợp (tạo hai bản ghi thử trong kho).
 - npm run build: compile và TypeScript.
 - Chưa kiểm thử tương tác trình duyệt. WebMCP start_portfolio_editing chỉ bật trên trình duyệt hỗ trợ.
+
+## Sơ yếu lý lịch
+
+Trang `/so-yeu-ly-lich` liên kết từ footer, dùng chung bản nháp với portfolio. Chọn Chỉnh sửa → Sơ yếu lý lịch để nhập thông tin cá nhân, sở thích, đam mê, tính cách, giá trị sống, hôn nhân, sức khỏe, gia đình và tối đa 12 mục tùy chỉnh. Mọi trường đều tùy chọn; thông tin, thành viên và nhóm mục trống luôn được ẩn trên trang hiển thị. Thành viên gia đình có thêm trường Học vấn.
+
+Xuất/nhập JSON bao gồm sơ yếu lý lịch. Gửi HR tạo bản chụp của cả hai trang; liên kết qua lại giữ nguyên mã chia sẻ. Những thay đổi sau đó chỉ xuất hiện ở link mới. Hồ sơ và link cũ không có sơ yếu lý lịch vẫn hoạt động.
+
+Ảnh đại diện: chọn Tải ảnh lên trong trình chỉnh sửa (JPG/PNG/WebP tối đa 8 MB). Ảnh được cắt vuông, thu nhỏ và lưu cùng bản nháp, bản sao JSON và snapshot HR. Xóa ảnh để trở lại chữ viết tắt.

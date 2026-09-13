@@ -29,7 +29,7 @@ const post = body => fetch(base + "/api/shares", {
  assert.equal((await fetch(base+"/api/shares",{method:"POST",headers:{"Content-Type":"application/json",Origin:"https://unrelated.example"},body:JSON.stringify(profile)})).status,403);
  assert.equal((await fetch(base+"/api/shares",{method:"POST",headers:{"Content-Type":"text/plain"},body:"{}"})).status,415);
  assert.equal((await fetch(base+"/api/shares",{method:"POST",headers:{"Content-Type":"application/json"},body:"not json"})).status,400);
- assert.equal((await post({...profile,about:"x".repeat(170000)})).status,413);
+ assert.equal((await post({...profile,about:"x".repeat(210000)})).status,413);
  console.log("HTTP checks passed: creation, short ID, deduplication, independent read, immutable versions, invalid/missing IDs, invalid input, origin, content type, body size.");
  console.log("Synthetic example: "+base+first.path);
 })().catch(error=>{console.error(error);process.exitCode=1});

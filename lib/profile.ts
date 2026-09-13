@@ -1,7 +1,27 @@
+export const biographyFields = [
+  ["birthDate", "Ngày sinh"], ["gender", "Giới tính"], ["phone", "Số điện thoại"],
+  ["birthPlace", "Nơi sinh"], ["hometown", "Quê quán"], ["nationality", "Quốc tịch"],
+  ["address", "Địa chỉ hiện tại"], ["education", "Học vấn"],
+  ["interests", "Sở thích"], ["passions", "Đam mê"], ["personality", "Tính cách"],
+  ["values", "Giá trị sống"], ["maritalStatus", "Tình trạng hôn nhân"],
+  ["health", "Sức khỏe"], ["familyNotes", "Giới thiệu gia đình"], ["notes", "Thông tin bổ sung"],
+] as const;
+export type BiographyField = typeof biographyFields[number][0];
+export type FamilyMember = { name: string; relationship: string; birthYear: string; occupation: string; education?: string; notes: string };
+export type Biography = Record<BiographyField, string> & {
+  family: FamilyMember[];
+  customFields: { label: string; value: string }[];
+};
+export function emptyBiography(): Biography {
+  const fields = Object.fromEntries(biographyFields.map(([key]) => [key, ""])) as Record<BiographyField, string>;
+  return { ...fields, family: [], customFields: [] };
+}
 export type Project = { title: string; category: string; description: string; tags: string; result: string; url: string };
 export type Experience = { company: string; role: string; period: string; description: string };
 export type Profile = {
   name: string; role: string; location: string; intro: string; about: string; email: string; github: string; linkedin: string; cv: string;
+  avatar?: string;
+  biography?: Biography;
   available: boolean; years: string; skills: string; projects: Project[]; experience: Experience[];
 };
 export const initial: Profile = {
@@ -21,3 +41,9 @@ export const initial: Profile = {
  ]
 };
 export function safeUrl(value: string) { try { const u = new URL(value); return ["https:", "http:"].includes(u.protocol) ? u.href : ""; } catch { return ""; } }
+
+export const AVATAR_MAX_LENGTH = 32000;
+export const PROFILE_BODY_MAX_BYTES = 200000;
+export function validAvatar(value: unknown): value is string {
+ return typeof value === "string" && (value === "" || (value.length <= AVATAR_MAX_LENGTH && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value)));
+}

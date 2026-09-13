@@ -41,3 +41,6 @@ next-env.d.ts
 /.data/
 # Allow the configuration template, never actual secrets.
 !.env.example
+
+# TypeScript incremental cache
+*.tsbuildinfo
